@@ -365,3 +365,39 @@ def save_pack(res: WorkflowResult, out_dir: str) -> str:
     with open(path, "w", encoding="utf-8") as f:
         f.write(content)
     return path
+
+def quality_check_pack(outline: str, script: str, shotlist: str, prompts: str):
+    """
+    Lightweight heuristic QC scoring (offline-safe).
+    Returns: (scores_dict, avg_score_float, suggestions_list)
+    """
+    scores = {}
+
+    # Clarity
+    scores["Clarity"] = 8 if len(script.split()) > 60 else 6
+
+    # Specificity
+    scores["Specificity"] = 8 if any(w in script.lower() for w in ["bước", "step", "kpi", "input", "process", "offer", "proof"]) else 6
+
+    # Strategic Depth
+    scores["Strategic Depth"] = 8 if any(w in script.lower() for w in ["chiến lược", "strategy", "system", "pipeline", "bottleneck", "funnel"]) else 6
+
+    # Visual Consistency
+    scores["Visual Consistency"] = 8 if "S1" in shotlist and "S5" in shotlist else 6
+
+    # Usefulness
+    scores["Usefulness"] = 8 if any(w in script.lower() for w in ["làm ngay", "action", "đo", "measure", "kpi"]) else 6
+
+    avg_score = round(sum(scores.values()) / len(scores), 1)
+
+    suggestions = []
+    if scores["Specificity"] < 8:
+        suggestions.append("Add 1–2 concrete steps or measurable indicators (KPI/CR/time saved).")
+    if scores["Strategic Depth"] < 8:
+        suggestions.append("Clarify the core principle (system/pipeline/funnel) behind the solution.")
+    if scores["Visual Consistency"] < 8:
+        suggestions.append("Ensure shotlist has 5 shots with clear camera/action cues.")
+    if scores["Usefulness"] < 8:
+        suggestions.append("Include a clear 'do this today' action step.")
+
+    return scores, avg_score, suggestions
