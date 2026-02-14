@@ -38,3 +38,6 @@ UI Layer (Streamlit)
 ```bash
 pip install -r requirements.txt
 streamlit run app.py
+
+Or use launcher:
+SETUP_AND_RUN.bat
