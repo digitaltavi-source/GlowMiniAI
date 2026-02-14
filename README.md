@@ -1,26 +1,40 @@
-# GlowMiniAI (Portable Offline Demo)
+# GlowMiniAI
 
-A tiny, **offline** AI workflow demo kit that runs **without any API key**.
+## Overview
 
-## What it does
-Generates a simple pack:
+GlowMiniAI is a portable offline AI workflow engine built with Python and Streamlit.  
+It generates structured media production packs including:
+
 - Outline
-- Short script
-- Prompt pack (global + per-shot)
+- Script
+- Prompt Pack
 
-## Run (UI)
+Designed with a modular architecture and API-pluggable structure.
+
+---
+
+## System Architecture
+
+UI Layer (Streamlit)  
+→ Workflow Engine  
+→ Offline Generation Layer  
+→ Export Module (.md)  
+→ Future API Integration Layer  
+
+---
+
+## Features
+
+- No API key required (offline mock engine)
+- Structured content generation
+- Modular workflow design
+- Markdown export
+- CLI support
+
+---
+
+## How to Run
+
 ```bash
 pip install -r requirements.txt
 streamlit run app.py
-```
-
-## Run (CLI)
-```bash
-python glowctl.py "Tối ưu hóa quy trình" --lang vi
-```
-
-Outputs are saved to the `output/` folder as `.md`.
-
-## Notes
-This kit uses an **offline mock generator** (template + structured randomness).
-Later, you can plug in an LLM provider while keeping the same output schema.
