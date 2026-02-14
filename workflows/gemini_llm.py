@@ -1,5 +1,5 @@
 from __future__ import annotations
-import os, json
+import json
 from typing import Dict, Any
 
 def gemini_generate_pack(
@@ -11,71 +11,56 @@ def gemini_generate_pack(
     audience: str,
     style_preset: str,
 ) -> Dict[str, Any]:
-    """
-    Returns dict with keys: outline, script, shotlist, prompts, mode, meta
-    """
     import google.generativeai as genai
 
     genai.configure(api_key=api_key)
-
-    # You can switch to a newer model later; keep stable for now.
     model = genai.GenerativeModel("gemini-1.5-flash")
 
-    # Force structured JSON so outputs are consistent and usable.
-    system = (
-        "You are an applied AI creative workflow engine. "
-        "Return ONLY valid JSON. No markdown. No extra text."
-    )
-
     schema = {
-        "mode": "string (one of: Business Growth, Process Optimization, AI System, Education, General)",
+        "mode": "Business Growth | Process Optimization | AI System | Education | General",
         "outline": "string",
         "script": "string",
-        "shotlist": "string",
-        "prompts": "string",
-        "meta": {"notes": "string"},
+        "shotlist": "string (exactly 5 shots, S1..S5)",
+        "prompts": "string (global + per-shot prompts)",
     }
 
     prompt = f"""
-SYSTEM: {system}
+You are an applied AI workflow engine. Return ONLY valid JSON. No markdown.
 
-TASK:
-Generate a high-quality, topic-specific pack for: "{topic}"
+Topic: "{topic}"
+Language: {language}
+Platform: {platform}
+Target duration: ~{duration_sec}s
+Audience: {audience}
+Style preset: {style_preset}
 
-CONSTRAINTS:
-- Language: {language}
-- Platform: {platform}
-- Duration: about {duration_sec} seconds
-- Audience: {audience}
-- Visual style preset: {style_preset}
-- Make it clearly different depending on topic (avoid generic templates).
-- Script must be short sentences, production-friendly timing.
-- Shotlist: exactly 5 shots, each with camera + action.
-- Prompt pack: Global look + per-shot prompts; avoid readable text artifacts.
+Requirements:
+- Make outputs highly topic-specific (avoid generic templates).
+- Outline: 5 beats, clear and practical.
+- Script: short sentences, production-ready pacing.
+- Shotlist: exactly 5 shots, label S1..S5 with camera+action.
+- Prompt pack: global look + per-shot prompts; avoid readable text artifacts.
 
-OUTPUT FORMAT:
-Return JSON exactly matching this schema (keys must exist):
+Return JSON with keys exactly:
 {json.dumps(schema, ensure_ascii=False)}
 
-Now produce the JSON:
+Now output the JSON:
 """
 
     resp = model.generate_content(prompt)
-    text = resp.text.strip()
+    text = (resp.text or "").strip()
 
-    # Safety: parse JSON robustly
+    # Robust JSON parse
     try:
         data = json.loads(text)
     except Exception:
-        # If model wraps JSON in code fences, strip them
         text2 = text.replace("```json", "").replace("```", "").strip()
         data = json.loads(text2)
 
     return {
-        "mode": data.get("mode", "LLM"),
+        "mode": data.get("mode", "General"),
         "outline": data.get("outline", ""),
         "script": data.get("script", ""),
         "shotlist": data.get("shotlist", ""),
         "prompts": data.get("prompts", ""),
-        "meta": {"llm": "gemini-1.5-flash", "notes": (data.get("meta") or {}).get("notes", "")},
     }
