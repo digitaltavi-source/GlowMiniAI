@@ -1,5 +1,5 @@
 import streamlit as st
-from workflows.engine import generate_media_pack, save_pack, build_markdown
+from workflows.engine import generate_media_pack, save_pack, build_markdown, quality_check_pack
 
 st.set_page_config(page_title="GlowMiniAI (Offline Build)", page_icon="✨", layout="centered")
 
@@ -44,7 +44,6 @@ with col2:
 with col3:
     download = st.button("Download .md", use_container_width=True)
 
-# Run once if any action
 if gen or save_local or download:
     if not topic.strip():
         st.error("Vui lòng nhập chủ đề.")
@@ -73,6 +72,21 @@ if gen or save_local or download:
         st.subheader("Prompt Pack")
         st.code(res.prompts)
 
+        # ✅ QC must be inside this block (after we have res)
+        st.subheader("🔍 Quality Control")
+        scores, avg_score, suggestions = quality_check_pack(res.outline, res.script, res.shotlist, res.prompts)
+
+        st.write(f"**Average Score:** {avg_score}/10")
+        for k, v in scores.items():
+            st.write(f"- {k}: {v}/10")
+
+        if suggestions:
+            st.write("**Suggestions:**")
+            for s in suggestions:
+                st.write(f"- {s}")
+        else:
+            st.success("Output quality is strong. No major issues detected.")
+
         md = build_markdown(res)
 
         if save_local:
@@ -94,10 +108,12 @@ st.markdown("### Run locally")
 st.code(
     "python -m pip install -r requirements.txt\n"
     "python -m streamlit run app.py\n\n"
+    "# Launcher:\n"
+    "SETUP_AND_RUN.bat\n\n"
     "# CLI:\n"
     "python glowctl.py \"chu de cua ban\" --lang vi",
     language="bash",
 )
 
 st.markdown("---")
-st.caption("GlowMiniAI | Adaptive Offline Mock Engine | Download-ready on Streamlit Cloud | Python + Streamlit")
+st.caption("GlowMiniAI | Adaptive Offline Mock Engine | QC + Download-ready | Python + Streamlit")
